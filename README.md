@@ -1,2 +1,2 @@
 # VenterRESTfulAPI
-Django quasi-RESFTful based API project
+Django quasi-RESFTful API based project
