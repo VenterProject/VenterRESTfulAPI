@@ -1,6 +1,5 @@
 Venter/migrations
 db.sqlite3
-manage.py
 .vscode/
 apienv/
 README.md
