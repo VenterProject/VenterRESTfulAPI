@@ -1,4 +1,5 @@
 Venter/migrations
 db.sqlite3
-manage.py
+# manage.py
+venter_venv
 
