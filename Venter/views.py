@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from rest_framework import viewsets
-from Venter.models import Category
+from Venter.models import Category, Organisation
 from . import serializers
 
 # Create your views here.
@@ -8,3 +8,7 @@ from . import serializers
 class CategoryViewset(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = serializers.CategorySerializer
+
+class OrganisationViewset(viewsets.ModelViewSet):
+    queryset = Organisation.objects.all()
+    serializer_class = serializers.OrganisationSerializer

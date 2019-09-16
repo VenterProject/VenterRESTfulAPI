@@ -4,5 +4,11 @@ from . import models
 class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
-        fields = ('category',)
+        fields = ('category', 'organisation',)
         model = models.Category
+
+class OrganisationSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        fields = ('organisation',)
+        model = models.Organisation
