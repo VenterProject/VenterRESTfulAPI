@@ -11,15 +11,12 @@ class ClassificationService:
     def __init__(self):
 
         complaints = pd.read_csv(
-            os.path.join(settings.BASE_DIR, "Venter", "ML_model", "ICMC", "dataset", "dataset_mcgm_clean",
+            os.path.join(settings.BASE_DIR, "Venter", "ML_Model", "ICMC", "dataset", "dataset_mcgm_clean",
                          "complaint_categories.csv"))
         self.index_complaint_title_map = {}
 
         for i in range(len(complaints)):
-            line = complaints['Subcategory-English'][i]
-
-            if isinstance(line, float):
-                line = complaints['Subcategory-Marathi'][i]
+            line = complaints['cat_list'][i]
 
             line = line.strip('\'').replace("/", " ").replace("(", " ").replace(")", " ")
             self.index_complaint_title_map[i] = line
