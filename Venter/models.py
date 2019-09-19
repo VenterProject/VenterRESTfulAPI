@@ -1,4 +1,5 @@
 from django.db import models
+from datetime import datetime
 
 # Create your models here.
 
@@ -16,3 +17,9 @@ class Category(models.Model):
     def __str__(self):
         return f'{self.category}'
 
+class File(models.Model):
+    organisation = models.ForeignKey(Organisation, on_delete=models.CASCADE)
+    ckpt_date = models.DateTimeField(verbose_name="Upload Date", default=datetime.now)
+    has_prediction = models.BooleanField(default=False)
+    output_file_json = models.FileField(upload_to="")
+    wordcloud_data = models.FileField(upload_to="")

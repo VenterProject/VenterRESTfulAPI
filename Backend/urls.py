@@ -20,6 +20,6 @@ from .api import router
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('Venter.urls')),
-    path('venter/', include(router.urls)),
+    path('venter/', include('Venter.urls')),
+    # path('venter/', include(router.urls)),
 ]

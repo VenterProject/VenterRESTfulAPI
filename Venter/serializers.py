@@ -7,8 +7,16 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ('category', 'organisation',)
         model = models.Category
 
+
 class OrganisationSerializer(serializers.ModelSerializer):
 
     class Meta:
         fields = ('organisation',)
         model = models.Organisation
+
+
+class FileSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        fields = ('id','organisation', 'ckpt_date',)
+        model = models.File
