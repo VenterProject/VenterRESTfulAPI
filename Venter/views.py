@@ -1,15 +1,22 @@
 import json
+import os
+
+from django.http import HttpResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 from rest_framework import viewsets
-from rest_framework.response import Response
 from rest_framework.decorators import api_view
-from Venter.models import Category, Organisation, File
-from Venter.serializers import CategorySerializer, OrganisationSerializer, FileSerializer
-from .wordcloud import generate_wordcloud
-from .ML_Model.ICMC.model.ClassificationService import ClassificationService
-from django.http import HttpResponse
+from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from Backend.settings import MEDIA_ROOT
+from Venter.models import Category, File, Organisation
+from Venter.serializers import (CategorySerializer, FileSerializer,
+                                OrganisationSerializer)
+
+from .ML_Model.ICMC.model.ClassificationService import ClassificationService
+from .wordcloud import generate_wordcloud
+
 
 class OrganisationViewSet(viewsets.ModelViewSet):
     queryset = Organisation.objects
@@ -105,39 +112,25 @@ class ModelCPView(APIView):
             row_dict['category'] = cat_list
             ml_output.append(row_dict)
 
-        with open("output_from_ml.json", 'w') as temp:
+        org_name = Organisation.objects.get(organisation_name='ICMC')
+        file_instance = File.objects.create(
+            organisation_name=org_name,
+            has_prediction = True,
+        )
+        file_instance.save()
+
+        output_directory_path = os.path.join(MEDIA_ROOT, f'{file_instance.organisation_name}/{file_instance.ckpt_date.date()}/output')
+        if not os.path.exists(output_directory_path):
+            os.makedirs(output_directory_path)
+
+        file_id = str(file_instance.id)
+        output_file_json_name = 'ml_output__'+file_id+'.json'
+        output_file_json_path = os.path.join(output_directory_path, output_file_json_name)
+
+        with open(output_file_json_path, 'w') as temp:
             json.dump(ml_output, temp)
-
-        '''
-            building code
-
-        # output_directory_path = os.path.join(MEDIA_ROOT, f'{filemeta.uploaded_by.organisation_name}/{filemeta.uploaded_by.user.username}/{filemeta.uploaded_date.date()}/output')
-
-        # if not os.path.exists(output_directory_path):
-        #     os.makedirs(output_directory_path)
-
-        # print(output_directory_path)
-        # output_file_path_json = os.path.join(output_directory_path, 'ml_output_result.json')
-        # output_file_path_xlsx = os.path.join(output_directory_path, 'wordcloud_output_result.json')            
-
-        
-
-        # org_name = Organisation.objects.get(organisation_name='ICMC')
-        # file_instance = File.objects.create(
-        #     organisation_name=org_name,
-        #     has_prediction = True,
-        #     output_file_json = 
-        # )
-        # file_instance.save()
-
-        '''    
-
-        # NOTE -------------------------------------------------
-        # filemeta.output_file_json = output_file_path_json
-
-        # save ml output in filefield json
-        # save input to API in wordcloud fieldfield
-        # change category extraction in import graph
+        file_instance.output_file_json = output_file_json_path
+        file_instance.save()
 
         return HttpResponse(json.dumps(ml_output), content_type="application/json")
 

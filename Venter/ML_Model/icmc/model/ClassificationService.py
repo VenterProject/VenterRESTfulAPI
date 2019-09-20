@@ -5,21 +5,17 @@ import pandas as pd
 from django.conf import settings
 
 from .ImportGraph import ImportGraph
+from Venter.models import Category
 
 
 class ClassificationService:
     def __init__(self):
+        model_category_list = Category.objects.filter(organisation_name='ICMC').values_list('category', flat=True)
+        category_set = set(model_category_list)
+        database_category_list = list(category_set)
 
-        complaints = pd.read_csv(
-            os.path.join(settings.BASE_DIR, "Venter", "ML_Model", "ICMC", "dataset", "dataset_mcgm_clean",
-                         "complaint_categories.csv"))
         self.index_complaint_title_map = {}
-
-        for i in range(len(complaints)):
-            line = complaints['cat_list'][i]
-
-            line = line.strip('\'').replace("/", " ").replace("(", " ").replace(")", " ")
-            self.index_complaint_title_map[i] = line
+        self.index_complaint_title_map = dict(list(enumerate(database_category_list)))
 
         self.g0 = ImportGraph.get_instance()
 
@@ -28,7 +24,7 @@ class ClassificationService:
             model = self.g0
 
         data = model.process_query(data, flag)
-        print('DATA SHAPE', data.shape)
+        # print('DATA SHAPE', data.shape)
         return model.run(data)
 
     def get_top_3_cats_with_prob(self, data):

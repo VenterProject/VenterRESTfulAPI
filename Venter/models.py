@@ -66,12 +66,12 @@ class File(models.Model):
     output_file_json = models.FileField(
         blank=True, 
         max_length=255,
-        validators=[FileExtensionValidator(allowed_extensions=['json'],
+        validators=[FileExtensionValidator(allowed_extensions=['json'])],
     )
     wordcloud_data = models.FileField(
         blank=True,
         max_length=255,
-        validators=[FileExtensionValidator(allowed_extensions=['json'],
+        validators=[FileExtensionValidator(allowed_extensions=['json'])],
     )
 
     class Meta:
