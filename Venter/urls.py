@@ -28,5 +28,5 @@ urlpatterns = [
     path('modelCP', ModelCPView.as_view()),
 
     # ex: /venter/modelWC
-    # path('modelWC/<int:pk>', views.modelWCview, name='modelWC'),
+    # path('modelWC', ModelWCView.as_view()),
 ]    

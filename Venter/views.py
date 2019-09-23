@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from Backend.settings import MEDIA_ROOT
-from Venter.models import Category, File, Organisation
+from Venter.models import Category, File, Organisation, UserComplaint, UserCategory
 from Venter.serializers import (CategorySerializer, FileSerializer,
                                 OrganisationSerializer)
 
@@ -132,18 +132,16 @@ class ModelCPView(APIView):
         file_instance.output_file_json = output_file_json_path
         file_instance.save()
 
+        for complaint, category in zip(list(ml_input_json_data.keys()), list(ml_input_json_data.values())):
+            user_complaint_instance = UserComplaint.objects.create(
+                organisation_name=org_name,
+                user_complaint=complaint,
+            )
+            user_complaint_instance.save()
+            user_category_instance = UserCategory.objects.create(
+                user_complaint=user_complaint_instance,
+                user_category=category,
+            )
+            user_category_instance.save()
+
         return HttpResponse(json.dumps(ml_output), content_type="application/json")
-
-
-# @require_http_methods(["POST"])
-# def modelWCView(request, pk):
-#     filemeta = File.objects.get(pk=pk)
-#     output_file_json = json.load(filemeta.output_file_json)
-
-    
-    # wordcloud_output = generate_wordcloud(input_wordcloud)
-    # with open(wordcloud_data_path_json, 'w') as temp:
-    #     json.dump(output_dict, temp)
-
-    # filemeta.wordcloud_data = wordcloud_data_path_json
-    # filemeta.save()
