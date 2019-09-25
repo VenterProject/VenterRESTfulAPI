@@ -80,18 +80,17 @@ class File(models.Model):
         """
         verbose_name_plural = 'File'
 
-class UserComplaint(models.Model):
+class UserCategory(models.Model):
     """
-        A User complaint is added for a particular organisation
-        Eg: Organisation 'xyz' may have one or more user complaints
-        # Create a user complaint instance
-        >>> UserComplaint.objects.create(organisation_name=xyz, creation_date = "Jan. 29, 2019, 7:59 p.m.", user_complaint='potholes on road')
+        A User category is added for a particular organisation
+        # Create a user category instance
+        >>> UserCategory.objects.create(organisation_name=xyz, creation_date = "Jan. 29, 2019, 7:59 p.m.", user_category='Bad roads')
     """        
     organisation_name = models.ForeignKey(
         Organisation,
         on_delete = models.CASCADE,
     )
-    user_complaint = models.CharField(
+    user_category = models.CharField(
         max_length = 200
     )
     creation_date = models.DateTimeField(
@@ -99,36 +98,37 @@ class UserComplaint(models.Model):
     )
 
     def __str__(self):
-        return self.user_complaint
-
-    class Meta:
-        """
-        Declares a plural name for User Complaint model
-        """
-        verbose_name_plural = 'User Complaint'
-
-class UserCategory(models.Model):
-    """
-        A User entered category is added for a particular user complaint
-        Eg: User complaint 'potholes on road' will have one user category associated with it e.g 'Bad roads'
-        # Create a user category instance
-        >>> UserCategory.objects.create(user_complaint=user_complaint,  user_category='Bad roads')
-    """        
-    user_complaint = models.ForeignKey(
-        UserComplaint,
-        on_delete = models.CASCADE,
-    )
-    user_category = models.CharField(
-        max_length = 200
-    )
-
-    def __str__(self):
         return self.user_category
 
     class Meta:
         """
-        Declares a plural name for UserCategory model
+        Declares a plural name for User Category model
         """
         verbose_name_plural = 'User Category'
+
+class UserComplaint(models.Model):
+    """
+        A User entered complaint is added for a particular user selected category
+        Eg: User complaint 'potholes on road' will have one user category associated with it e.g 'Bad roads'
+        # Create a user complaint instance
+        >>> UserComplaint.objects.create(user_category=user_category,  user_complaint='potholes on road')
+    """        
+    user_category = models.ForeignKey(
+        UserCategory,
+        on_delete = models.CASCADE,
+    )
+    user_complaint = models.CharField(
+        max_length = 200
+    )
+
+    def __str__(self):
+        return self.user_complaint
+    
+    class Meta:
+        """
+        Declares a plural name for UserComplaint model
+        """
+        verbose_name_plural = 'User Complaint'
+        unique_together = ('user_category', 'user_complaint',)
 
 

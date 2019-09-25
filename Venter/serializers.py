@@ -22,6 +22,11 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class FileSerializer(serializers.ModelSerializer):
     ckpt_date = serializers.DateTimeField(format="%d %B %Y")
+
+    # ckpt_date = datetime.now()
+
+    # ckpt_date = ckpt_date.strftime("%d %B %Y")
+    
     class Meta:
         model = File
         fields = (
