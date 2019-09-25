@@ -1,5 +1,6 @@
 from django.db import models
 from datetime import datetime
+from datetime import date
 
 # Create your models here.
 
@@ -19,7 +20,8 @@ class Category(models.Model):
 
 class File(models.Model):
     organisation = models.ForeignKey(Organisation, on_delete=models.CASCADE)
-    ckpt_date = models.DateTimeField(verbose_name="Upload Date", default=datetime.now)
+    ckpt_date = models.DateTimeField(verbose_name="Upload Date",default = datetime.now)
     has_prediction = models.BooleanField(default=False)
-    output_file_json = models.FileField(upload_to="")
-    wordcloud_data = models.FileField(upload_to="")
+    output_file_json = models.FileField(upload_to="", blank=True, null=True)
+    wordcloud_data = models.FileField(upload_to="", blank=True, null=True)
+
