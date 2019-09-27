@@ -1,5 +1,9 @@
 Venter/migrations
 db.sqlite3
-# manage.py
-venter_venv
+.vscode/
+apienv/
+venter_venv/
+README.md
+media/
+
 
