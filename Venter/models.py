@@ -91,7 +91,7 @@ class UserCategory(models.Model):
         on_delete = models.CASCADE,
     )
     user_category = models.CharField(
-        max_length = 200
+        max_length = 255
     )
     creation_date = models.DateTimeField(
         default=datetime.now,
@@ -118,7 +118,7 @@ class UserComplaint(models.Model):
         on_delete = models.CASCADE,
     )
     user_complaint = models.CharField(
-        max_length = 200
+        max_length = 255
     )
 
     def __str__(self):

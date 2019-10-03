@@ -1,7 +1,7 @@
 from django.urls import path
 from . import views
 
-from Venter.views import OrganisationViewSet, CategoryViewSet, FileViewSet, ModelCPView, schema_view
+from Venter.views import OrganisationViewSet, CategoryViewSet, FileViewSet, ModelCPView, schema_view, ModelWCView
 
 urlpatterns = [
     # ex: /venter/organisation
@@ -28,7 +28,7 @@ urlpatterns = [
     path('modelCP', ModelCPView.as_view()),
 
     # ex: /venter/modelWC
-    # path('modelWC', ModelWCView.as_view()),
+    path('modelWC', ModelWCView.as_view()),
 
     path('docs/', schema_view),
 ]    

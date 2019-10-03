@@ -51,21 +51,25 @@ def mapNounFrequency(sentenceList):
 def generate_wordcloud(input_wordcloud):
     '''   
     main/ driver function
+    input_wordcloud has format { category: [complaint1, complaint2 ,..], }
+    words_output has format { category: [{ word: "word1", freq: freq1 }], }
     '''
     # if __name__ == "__main__":
+
     data = {}
     words = {}
-
     data = input_wordcloud
 
-    for domains in data:
-        words[domains] = []
-        for cats in data[domains]:
-            temp = {}
-            temp[cats] = {}
-            words[domains].append(temp)
-            tempargs = []
-            for scoredresponse in data[domains][cats]:
-                tempargs.append(scoredresponse['response'].split('-')[-1].strip())
-            temp[cats] = mapNounFrequency(tempargs)
-    return words
+    for k, v in data.items():
+        temp_list = []
+        temp_list = mapNounFrequency(v)
+        words[k] = temp_list
+
+    words_output = {}
+
+    for k, v in words.items():
+        words_output[k]=[]
+        for k1, v1 in v.items():
+            words_output[k].append({'word':k1,'freq':v1})
+
+    return words_output
