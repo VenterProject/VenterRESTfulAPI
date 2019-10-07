@@ -5,7 +5,7 @@ May 28, 2019
 '''
 
 import json
-
+import string, re
 import inflect
 import nltk
 
@@ -54,22 +54,60 @@ def generate_wordcloud(input_wordcloud):
     input_wordcloud has format { category: [complaint1, complaint2 ,..], }
     words_output has format { category: [{ word: "word1", freq: freq1 }], }
     '''
-    # if __name__ == "__main__":
+    
+    '''
+    input_wordcloud has format { category: [complaint1, complaint2 ,..], }
+    words_output has format { category: [{ word: "word1", freq: freq1 }], }
+    '''
 
-    data = {}
-    words = {}
+    # data = {}
+    # words = {}
+    # data = input_wordcloud
+
+    # for k, v in data.items():
+    #     temp_list = []
+    #     temp_list = mapNounFrequency(v)
+    #     words[k] = temp_list
+
+    # words_output = {}
+
+    # for k, v in words.items():
+    #     words_output[k]=[]
+    #     for k1, v1 in v.items():
+    #         words_output[k].append({'word':k1,'freq':v1})
+
+
+    '''
+    input_wordcloud has format [complaint1, complaint2 ,..]
+    words_output has format [{ word: "word1", freq: freq1 }, { word: "word2", freq: freq2 },]
+    '''
+
+    data = []
     data = input_wordcloud
-
-    for k, v in data.items():
-        temp_list = []
-        temp_list = mapNounFrequency(v)
-        words[k] = temp_list
-
+    words = {}
+    words = mapNounFrequency(data)
     words_output = {}
+    # with open('word_freq_list.json', 'w') as f:
+    #     json.dump(words,f)
 
-    for k, v in words.items():
-        words_output[k]=[]
-        for k1, v1 in v.items():
-            words_output[k].append({'word':k1,'freq':v1})
+    words_keys = list(words.keys())
+    f_1 = (lambda x: x.lower().translate(x.maketrans(string.punctuation,' '*len(string.punctuation))))
+    f_2 = (lambda x:re.sub(r"\s+", ' ', x))
+    words_keys = [f_1(x) for x in words_keys]
+    # print("words_keys = ", words_keys)
+    words_keys = [f_2(x) for x in words_keys]
+
+    with open('words_keys.json', 'w') as f:
+        json.dump(words_keys,f)
+
+    for k, v in zip(words_keys, words.values()):
+        if len(k)>2:
+            words_output[k.upper()] = v
+
+    
+
+
+    with open('words_output.json', 'w') as f:
+        json.dump(words_output,f)
 
     return words_output

@@ -197,23 +197,89 @@ class ModelWCView(APIView):
 
     """
     def get(self, request):
-        user_category_queryset = UserCategory.objects.filter(
-            organisation_name=Organisation.objects.get(organisation_name='ICMC'))
+        
+        org_obj = Organisation.objects.get(organisation_name='ICMC')
 
-        wc_input = {}
 
-        for user_category_queryset_instance in user_category_queryset:
+        """
+        Generates the wordcloud input format: { category: [complaint1, complaint2 ,..], }, which is separated by categories
+        """
+        # user_category_queryset = UserCategory.objects.filter(
+        #     organisation_name=org_obj)
+        # wc_input = {}
+        # for user_category_queryset_instance in user_category_queryset:
 
-            if str(user_category_queryset_instance.user_category) in wc_input.keys():
+        #     if str(user_category_queryset_instance.user_category) in wc_input.keys():
+        #         user_comp_instance = UserComplaint.objects.get(user_category=user_category_queryset_instance)                
+        #         wc_input[str(user_category_queryset_instance.user_category)].append(str(user_comp_instance.user_complaint))
+
+        #     else:
+        #         l_compaint = []
+        #         user_comp_instance = UserComplaint.objects.get(user_category=user_category_queryset_instance)
+        #         l_compaint.append(str(user_comp_instance.user_complaint))
+        #         wc_input[str(user_category_queryset_instance.user_category)] = l_compaint
+
+        '''
+        Format of input fed into the wordcoud is [complaint1, complaint2,]
+        Wordcloud output is generated using the complaints created within past 3 months.
+        New wordcloud data is generated only if the previous output was generated more than a week ago, else the prev output is returned.
+        '''
+        wc_input = []
+
+        current_datetime = datetime.now()
+        prev_week_datetime = current_datetime - timedelta(days=7)
+        three_months_before = current_datetime - timedelta(days=90)
+        
+        if File.objects.filter(wordcloud_data__icontains = 'wc_output').filter(ckpt_date__gt = prev_week_datetime):
+            f = File.objects.filter(wordcloud_data__icontains = 'wc_output').get(ckpt_date__gt = prev_week_datetime)
+            wc_output = json.load(f.wordcloud_data)
+
+            # print("if got executed")
+
+            # return render(request, './Venter/wordcloud.html', {'words':wc_output})
+            return HttpResponse(json.dumps(wc_output), content_type="application/json")
+
+        else:
+            # print("else got executed")
+            user_category_queryset = UserCategory.objects.filter(
+                organisation_name=org_obj).filter(creation_date__gt = three_months_before)
+            
+            for user_category_queryset_instance in user_category_queryset:
                 user_comp_instance = UserComplaint.objects.get(user_category=user_category_queryset_instance)                
-                wc_input[str(user_category_queryset_instance.user_category)].append(str(user_comp_instance.user_complaint))
+                wc_input.append(str(user_comp_instance.user_complaint))
+            
+            wc_output = generate_wordcloud(wc_input)
 
-            else:
-                l_compaint = []
-                user_comp_instance = UserComplaint.objects.get(user_category=user_category_queryset_instance)
-                l_compaint.append(str(user_comp_instance.user_complaint))
-                wc_input[str(user_category_queryset_instance.user_category)] = l_compaint
+            file_instance = File.objects.create(organisation_name = org_obj, ckpt_date = datetime.now())
+            file_id = str(file_instance.id)
 
-        wc_output = generate_wordcloud(wc_input)
+            output_directory_path = os.path.join(MEDIA_ROOT, f'{file_instance.organisation_name}\{file_instance.ckpt_date.date()}\wc_output')
+            if not os.path.exists(output_directory_path):
+                os.makedirs(output_directory_path)
 
-        return HttpResponse(json.dumps(wc_output), content_type="application/json")
+            output_file_json_name = 'wc_output__'+file_id+'.json'
+            output_file_json_path = os.path.join(output_directory_path, output_file_json_name)
+
+            
+            
+            with open(output_file_json_path, 'w') as f:
+                json.dump(wc_output,f)
+
+            file_instance.wordcloud_data = output_file_json_path
+            file_instance.save()
+            if File.objects.filter(wordcloud_data__icontains = 'wc_output').exists():
+                File.objects.filter(ckpt_date__lt=datetime.now()-timedelta(days=1)).delete()
+
+            return HttpResponse(json.dumps(wc_output), content_type="application/json")
+
+        """
+        Below code generates the wordcloud output using the entire database. 
+        """
+        
+        # for user_category_queryset_instance in user_category_queryset:
+        #     user_comp_instance = UserComplaint.objects.get(user_category=user_category_queryset_instance)                
+        #     wc_input.append(str(user_comp_instance.user_complaint))
+        
+        # wc_output = generate_wordcloud(wc_input)
+
+        # return HttpResponse(json.dumps(wc_output), content_type="application/json")
