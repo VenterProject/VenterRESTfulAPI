@@ -1,34 +1,10 @@
 from django.urls import path
 from . import views
-
-from Venter.views import OrganisationViewSet, CategoryViewSet, FileViewSet, ModelCPView, schema_view, ModelWCView
+from django.views.generic import TemplateView
 
 urlpatterns = [
-    # ex: /venter/organisation
-    path('organisation', OrganisationViewSet.as_view({
-        'get': 'list'
-    })),
-    # ex: /venter/category
-    path('category', CategoryViewSet.as_view({
-        'get': 'list'
-    })),
-    # ex: /venter/category/XYZ
-    path('category/<organisation>', CategoryViewSet.as_view({
-        'get': 'retrieve'
-    })),
-    # ex: /venter/file
-    path('file', FileViewSet.as_view({
-        'get': 'list'
-    })),
-    # ex: /venter/file/XYZ
-    path('file/<organisation>', FileViewSet.as_view({
-        'get': 'retrieve'
-    })),
-    # ex: /venter/modelCP
-    path('modelCP', ModelCPView.as_view()),
-
-    # ex: /venter/modelWC
-    path('modelWC', ModelWCView.as_view()),
-
-    path('docs/', schema_view),
+    # ex: /venter/
+    path('', TemplateView.as_view(template_name='Venter/home.html'), name='home'),
+    # ex: /venter/home/
+    path('home/', TemplateView.as_view(template_name='Venter/home.html'), name='home'),
 ]    

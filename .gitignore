@@ -1,8 +1,7 @@
-Venter/migrations
 db.sqlite3
+venter_venv/
 .vscode/
+Venter/migrations
 apienv/
-README.md
 media/
-
-
+README.md
