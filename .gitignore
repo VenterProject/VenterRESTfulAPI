@@ -5,3 +5,10 @@ Venter/migrations
 apienv/
 media/
 README.md
+Venter/ML_Model/icmc/**
+Venter/ML_Model/sentence_model/MAX.bin
+Venter/ML_Model/sentence_model/__pycache__/**
+Venter/ML_Model/keyword_model/__pycache__/**
+Venter/ML_Model/sentence_model/sentencemodel.pyc
+Venter/ML_Model/sentence_model/csvparser.pyc
+Venter/ML_Model/sentence_model/.DS_Store
