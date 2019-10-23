@@ -1,14 +1,17 @@
 from django.contrib import admin
+import os
 
-from Venter.models import (Category, File, Organisation, Draft,
-                           UserResponse)
+from Venter.models import Category, File, Organisation, Draft, UserResponse
 
 class OrganisationAdmin(admin.ModelAdmin):
     list_display = ('organisation_name',)
 
 class DraftAdmin(admin.ModelAdmin):
-    list_display = ('draft_name',)
+    list_display = ('draft_name', 'ml_output_filename')
     list_filter = ['organisation_name', 'creation_date']
+
+    def ml_output_filename(self, obj):
+        return os.path.basename(obj.ml_output.output_file_json.name)
 
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ('category',)
@@ -19,7 +22,7 @@ class FileAdmin(admin.ModelAdmin):
     list_filter = ['organisation_name', 'ckpt_date']
 
 class UserResponseAdmin(admin.ModelAdmin):
-    list_display = ('draft_name', 'user_response', 'creation_date',)
+    list_display = ('user_response', 'creation_date',)
     list_filter = ['draft_name', 'creation_date']
 
 

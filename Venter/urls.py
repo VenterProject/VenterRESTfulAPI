@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views
+from Venter.views import FileViewSet, ModelKMView
 from django.views.generic import TemplateView
 
 urlpatterns = [
@@ -7,4 +7,14 @@ urlpatterns = [
     path('', TemplateView.as_view(template_name='Venter/home.html'), name='home'),
     # ex: /venter/home/
     path('home/', TemplateView.as_view(template_name='Venter/home.html'), name='home'),
+    # ex: /venter/file
+    path('file', FileViewSet.as_view({
+        'get': 'list'
+    })),
+    # ex: /venter/file/XYZ
+    path('file/<organisation>', FileViewSet.as_view({
+        'get': 'retrieve'
+    })),
+    # ex: /venter/modelKM
+    path('modelKM', ModelKMView.as_view()),
 ]    

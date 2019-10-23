@@ -84,7 +84,6 @@ def categorizer(keywords):
     '''
         driver function returns model output mapped on the input corpora as a dict object
     '''    
-    
     stats = open('stats.txt', 'w', encoding='utf-8')
 
     st = time.time()
@@ -99,7 +98,6 @@ def categorizer(keywords):
 
     responsePath = os.path.join(BASE_DIR, 'Venter/ML_model/keyword_model/data/keyword data/')
     responseDomains = os.listdir(responsePath)
-    # responseDomains.sort()
     
     # dictionary for populating the json output
     results = {}
@@ -162,19 +160,6 @@ def categorizer(keywords):
                 min_sim_index = np.array(score_row).argmin()
                 temp = {}
                 temp['response'] = response
-                temp_score = np.array(score_row).min()
-                if temp_score==np.float64(np.inf):
-                    temp_score=10.0
-                temp['score'] = temp_score
                 results[domain][categories[min_sim_index]].append(temp)
         print('Completed.\n')
-        
-
-        # sorting domain wise categorised responses based on scores(desc)
-        for domain in results:
-            for category in results[domain]:                                                                                                                          
-                temp = results[domain][category]
-                if len(temp)==0 or category=='Novel':
-                    continue
-                results[domain][category] = sorted(temp, key=lambda k: k['score'], reverse=False)
     return results
