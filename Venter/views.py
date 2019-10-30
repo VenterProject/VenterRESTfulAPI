@@ -46,7 +46,16 @@ class FileViewSet(viewsets.ModelViewSet):
 
 class ModelKMView(APIView):
     """
-        YET TO ADD
+        Arguments:  1) APIView: Handles POST requests of type DRF Request instance. 
+        Methods:    1) post: This handler is utilized for CIVIS App to send json Input to Keyword-based ML API endpoint
+        Workflow:   1) On retrieval of DICT containing one or more responses and categories(extracted from draft sumammary),
+                        the responses and keywords(extracted categories) are separately retrieved to be fed into the categorizer(words) method.
+                    2) The KeywordSimilarityMapping class handles the request to the CIVIS ML model.
+                    3) The output/ directory is created in order to save the ML model output results based on draft_name, ckpt_date.
+                    4) If the draft already exists in the db, then:
+                        a. If responses received already exist in the db, the ml_output.json file is directly fetched from the db.
+                        b. If a set of responses received do not exist in the db, a response list is generated and fed into the ml model.
+                    5) The output from the CIVIS ML model is sent to the CIVIS application as an HTTPResponse (JSON format).
     """
     def post(self, request):
         ml_input_json_data=json.loads(request.body)
@@ -55,45 +64,70 @@ class ModelKMView(APIView):
         draft_name = draft.lower()
 
         org_obj = Organisation.objects.get(organisation_name='CIVIS')
-
         response=[]
         for draft, val in ml_input_json_data.items():
             for item in val['responses']:
-                response.append(item['response'])
+                response.append(item)
         keyword_dict={}
         for draft, val in ml_input_json_data.items():
             keyword_list = val['summary']
         keyword_dict[draft_name] = keyword_list
 
-        sm = KeywordSimilarityMapping(draft_name, response, keyword_dict)
-    
-        ml_output = sm.driver()
+        temp_response = []
+        temp_response = response
+        response = []
 
-        # create Draft, Category, UserResponses, File objects instances in Database
-        draft_obj = Draft.objects.create(organisation_name=org_obj, draft_name=draft_name)
-        for cat in keyword_list:
-            Category.objects.create(draft_name=draft_obj, category=cat)
-        for resp in response:
-            UserResponse.objects.create(draft_name=draft_obj, user_response=resp)
+        try:
+            draft_obj = Draft.objects.get(organisation_name=org_obj, draft_name=draft_name)
 
-        file_instance = File.objects.create(
-            organisation_name=org_obj,
-        )
-        file_instance.save()
+            # create response list(only for the new set of responses i.e. responses not already existing in the db for a particular draft_name)
+            for resp in temp_response:
+                if UserResponse.objects.filter(draft_name=draft_obj, user_response=resp).exists()==False:
+                    UserResponse.objects.create(draft_name=draft_obj, user_response=resp)
+                    response.append(resp)
 
-        output_directory_path = os.path.join(MEDIA_ROOT, f'{file_instance.organisation_name}/{file_instance.ckpt_date.date()}/output')
-        if not os.path.exists(output_directory_path):
-            os.makedirs(output_directory_path)
+            # if response list is empty, then responses received are same, hence directly fetch the ml_output file associated with the draft_name
+            # if response list is not empty, the list is fed into the ML model for performing prediction on the new set of responses
+            if len(response)==0:
+                results = draft_obj.ml_output.output_file_json.path
+                with open(results, 'r') as content:
+                    ml_output = json.load(content)
+            else:
+                print("================================== PARTICULAR RESPONSE(S) NOT PRESENT IN DB, PERFORMING ML PREDICTION FOR THEM")
+                sm = KeywordSimilarityMapping(draft_name, response, keyword_dict)
+                temp_ml_output = sm.driver()
 
-        file_id = str(file_instance.id)
-        output_file_json_name = 'ml_output__'+file_id+'.json'
-        output_file_json_path = os.path.join(output_directory_path, output_file_json_name)
+                # open ml output file and append new response to it and save again
 
-        with open(output_file_json_path, 'w') as temp:
-            json.dump(ml_output, temp)
-        file_instance.output_file_json = output_file_json_path
-        file_instance.save()
+        except Draft.DoesNotExist:
+            sm = KeywordSimilarityMapping(draft_name, response, keyword_dict)
+            ml_output = sm.driver()
 
-        Draft.objects.filter(draft_name=draft_name).update(ml_output=file_instance)
+            # create Draft, Category, UserResponses, File objects instances in Database
+            draft_obj = Draft.objects.create(organisation_name=org_obj, draft_name=draft_name)
+            for cat in keyword_list:
+                Category.objects.create(draft_name=draft_obj, category=cat)
+            for resp in response:
+                UserResponse.objects.create(draft_name=draft_obj, user_response=resp)
+
+            file_instance = File.objects.create(
+                organisation_name=org_obj,
+            )
+            file_instance.save()
+
+            output_directory_path = os.path.join(MEDIA_ROOT, f'{file_instance.organisation_name}/{file_instance.ckpt_date.date()}/output')
+            if not os.path.exists(output_directory_path):
+                os.makedirs(output_directory_path)
+
+            file_id = str(file_instance.id)
+            output_file_json_name = 'ml_output__'+file_id+'.json'
+            output_file_json_path = os.path.join(output_directory_path, output_file_json_name)
+
+            with open(output_file_json_path, 'w') as temp:
+                json.dump(ml_output, temp)
+            file_instance.output_file_json = output_file_json_path
+            file_instance.save()
+
+            Draft.objects.filter(draft_name=draft_name).update(ml_output=file_instance)
 
         return HttpResponse(json.dumps(ml_output), content_type="application/json")

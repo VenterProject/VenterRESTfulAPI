@@ -93,7 +93,8 @@ class Draft(models.Model):
         on_delete = models.CASCADE,
     )
     draft_name = models.CharField(
-        max_length = 200
+        max_length = 200,
+        unique=True,
     )
     creation_date = models.DateTimeField(
         default=datetime.now,
