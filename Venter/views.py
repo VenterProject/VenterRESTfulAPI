@@ -73,31 +73,53 @@ class ModelKMView(APIView):
             keyword_list = val['summary']
         keyword_dict[draft_name] = keyword_list
 
-        temp_response = []
-        temp_response = response
-        response = []
-
         try:
             draft_obj = Draft.objects.get(organisation_name=org_obj, draft_name=draft_name)
 
             # create response list(only for the new set of responses i.e. responses not already existing in the db for a particular draft_name)
+            temp_response = []
+            temp_response = response
+            response2 = []
             for resp in temp_response:
                 if UserResponse.objects.filter(draft_name=draft_obj, user_response=resp).exists()==False:
                     UserResponse.objects.create(draft_name=draft_obj, user_response=resp)
-                    response.append(resp)
+                    response2.append(resp)
 
             # if response list is empty, then responses received are same, hence directly fetch the ml_output file associated with the draft_name
             # if response list is not empty, the list is fed into the ML model for performing prediction on the new set of responses
-            if len(response)==0:
-                results = draft_obj.ml_output.output_file_json.path
-                with open(results, 'r') as content:
-                    ml_output = json.load(content)
-            else:
-                print("================================== PARTICULAR RESPONSE(S) NOT PRESENT IN DB, PERFORMING ML PREDICTION FOR THEM")
-                sm = KeywordSimilarityMapping(draft_name, response, keyword_dict)
-                temp_ml_output = sm.driver()
+            results = draft_obj.ml_output.output_file_json.path
+            with open(results, 'r') as content:
+                dict1 = json.load(content)
 
-                # open ml output file and append new response to it and save again
+            if len(response2)==0:
+                ml_output = dict1
+            else:
+                sm = KeywordSimilarityMapping(draft_name, response2, keyword_dict)
+                dict2 = sm.driver()
+
+                # open pre-existing ml output file and append new response to it; update ml_output file; pass response to API.
+                draft_key = list(dict1.keys())[0]
+                d1=list(dict1.values())[0]
+                d2=list(dict2.values())[0]
+                d3={}
+                for k, v in d1.items():
+                    if k not in d3.keys():
+                        d3[k]=v
+                for k, v in d2.items():
+                    if k in d3.keys():
+                        if len(v)==0:
+                            pass
+                        else:
+                            l=d3[k]
+                            l=l+v
+                            d3[k]=l
+                    else:
+                        d3[k]=v
+                ml_output={}
+                ml_output[draft_key]=d3
+
+            with open(results, 'w') as content:
+                json.dump(ml_output, content)
 
         except Draft.DoesNotExist:
             sm = KeywordSimilarityMapping(draft_name, response, keyword_dict)
