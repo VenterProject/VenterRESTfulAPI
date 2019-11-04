@@ -12,6 +12,8 @@ from Venter.serializers import FileSerializer
 from Venter.ML_Model.keyword_model.modeldriver import KeywordSimilarityMapping
 from Backend.settings import MEDIA_ROOT
 
+from .wordcloud import generate_wordcloud
+
 
 class FileViewSet(viewsets.ModelViewSet):
     queryset = File.objects
@@ -153,3 +155,30 @@ class ModelKMView(APIView):
             Draft.objects.filter(draft_name=draft_name).update(ml_output=file_instance)
 
         return HttpResponse(json.dumps(ml_output), content_type="application/json")
+
+
+class WCView(APIView):
+
+    def get(self, request):
+
+        draftname = request.GET.get('draft_name')
+        print("input draft string = ", draftname)
+        print("type of input = ", type(draftname))
+        draft_obj = Draft.objects.get(draft_name = 'the prohibition of electronic cigarettes (production, manufacture, import, export, transport, sale, distribution, storage and advertisement) bill, 2019')
+        print("draft object = ", draft_obj)
+        print("type of draft object = ", type(draft_obj))
+        user_response_obj = UserResponse.objects.filter(draft_name = draft_obj)
+        print("user response queryset = ", user_response_obj)
+        wc_input = {}
+        wc_input[draftname] = []
+        for user_response_obj_instance in user_response_obj:
+            wc_input[draftname].append(user_response_obj_instance.user_response)
+
+        wc_output = generate_wordcloud(wc_input)
+
+        with open("wc_output.json", 'w') as content:
+                json.dump(wc_output, content)
+        
+        return HttpResponse(json.dumps(wc_output), content_type="application/json")
+        
+

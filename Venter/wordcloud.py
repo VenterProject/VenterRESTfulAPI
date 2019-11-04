@@ -60,21 +60,21 @@ def generate_wordcloud(input_wordcloud):
     words_output has format { category: [{ word: "word1", freq: freq1 }], }
     '''
 
-    # data = {}
-    # words = {}
-    # data = input_wordcloud
+    data = {}
+    words = {}
+    data = input_wordcloud
 
-    # for k, v in data.items():
-    #     temp_list = []
-    #     temp_list = mapNounFrequency(v)
-    #     words[k] = temp_list
+    for k, v in data.items():
+        temp_list = []
+        temp_list = mapNounFrequency(v)
+        words[k] = temp_list
 
-    # words_output = {}
+    words_output = {}
 
-    # for k, v in words.items():
-    #     words_output[k]=[]
-    #     for k1, v1 in v.items():
-    #         words_output[k].append({'word':k1,'freq':v1})
+    for k, v in words.items():
+        words_output[k]=[]
+        for k1, v1 in v.items():
+            words_output[k].append({'word':k1,'freq':v1})
 
 
     '''
@@ -82,19 +82,19 @@ def generate_wordcloud(input_wordcloud):
     words_output has format [{ word: "word1", freq: freq1 }, { word: "word2", freq: freq2 },]
     '''
 
-    data = []
-    data = input_wordcloud
-    words = {}
-    words = mapNounFrequency(data)
-    words_output = {}
-    words_keys = list(words.keys())
-    f_1 = (lambda x: x.lower().translate(x.maketrans(string.punctuation,' '*len(string.punctuation))))
-    f_2 = (lambda x:re.sub(r"\s+", ' ', x))
-    words_keys = [f_1(x) for x in words_keys]
-    words_keys = [f_2(x) for x in words_keys]
+    # data = []
+    # data = input_wordcloud
+    # words = {}
+    # words = mapNounFrequency(data)
+    # words_output = {}
+    # words_keys = list(words.keys())
+    # f_1 = (lambda x: x.lower().translate(x.maketrans(string.punctuation,' '*len(string.punctuation))))
+    # f_2 = (lambda x:re.sub(r"\s+", ' ', x))
+    # words_keys = [f_1(x) for x in words_keys]
+    # words_keys = [f_2(x) for x in words_keys]
 
-    for k, v in zip(words_keys, words.values()):
-        if len(k)>2:
-            words_output[k.upper()] = v
+    # for k, v in zip(words_keys, words.values()):
+    #     if len(k)>2:
+    #         words_output[k.upper()] = v
 
     return words_output
