@@ -7,9 +7,10 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from Venter.models import File, Organisation, Draft, UserResponse, Category
+from Venter.models import File, Organisation, Draft, UserResponse, Category, SentenceCategory
 from Venter.serializers import FileSerializer
 from Venter.ML_Model.keyword_model.modeldriver import KeywordSimilarityMapping
+from Venter.ML_Model.sentence_model.modeldriver import SimilarityMapping
 from Backend.settings import MEDIA_ROOT
 
 from .wordcloud import generate_wordcloud
@@ -50,7 +51,7 @@ class ModelKMView(APIView):
     """
         Arguments:  1) APIView: Handles POST requests of type DRF Request instance. 
         Methods:    1) post: This handler is utilized for CIVIS App to send json Input to Keyword-based ML API endpoint
-        Workflow:   1) On retrieval of DICT containing one or more responses and categories(extracted from draft sumammary),
+        Workflow:   1) On retrieval of DICT containing one or more responses and categories(extracted from draft summary),
                         the responses and keywords(extracted categories) are separately retrieved to be fed into the categorizer(words) method.
                     2) The KeywordSimilarityMapping class handles the request to the CIVIS ML model.
                     3) The output/ directory is created in order to save the ML model output results based on draft_name, ckpt_date.
@@ -158,7 +159,12 @@ class ModelKMView(APIView):
 
 
 class WCView(APIView):
+    """
+        Handles a get request where the draft name is mentioned in the URL itself
+        input: url/venter/modelWC?draft_name="draft name string without quotes"
+        output: {draft name: {'word': word 1, 'freq': freq1}, ...}
 
+    """
     def get(self, request):
 
         draftname = request.GET.get('draft_name')
@@ -175,5 +181,112 @@ class WCView(APIView):
                 json.dump(wc_output, content)
         
         return HttpResponse(json.dumps(wc_output), content_type="application/json")
-        
 
+
+class ModelSMView(APIView):
+
+    """
+        Arguments:  1) APIView: Handles POST requests of type DRF Request instance. 
+        Methods:    1) post: This handler is utilized for CIVIS App to send json Input to Sentence-based ML API endpoint.
+        Workflow:   1) On retrieval of DICT containing one or more responses and categories(extracted from draft summary),
+                        the responses and sentences(extracted categories) are separately retrieved to be fed into the model_driver method.
+                    2) The SimilarityMapping class handles the request to the CIVIS ML model.
+                    3) If the draft already exists in the db, then:
+                        a. New responses are saved into the db.
+                        b. All responses with respective draft are fed into the ml model .
+                    4) If the draft does not exist in the db then:
+                        a. Save the new draft and all the corresponding new responses and list of categories
+                        b. Fed the new draft and list of new responses and categories to the ml model
+                    5) The output from the CIVIS ML model is sent to the CIVIS application as an HTTPResponse (JSON format).
+    """
+
+    def post(self, request):
+
+        ml_input_json_data = json.loads(request.body)
+
+        ml_sm_output = {}
+
+        # Start traversing the data sent as the body
+        for draft, data in ml_input_json_data.items():
+            
+            org_obj = Organisation.objects.get(organisation_name='CIVIS')
+            
+            print("draft: \n", draft)
+            # Checking if the draft exist in the db or not
+            # If yes then fitering the new responses and populating them to db
+            # Try will work only if the draft already exists
+            try:
+                print("Trying if draft exists\n")
+                
+                new_responses = []
+                print("Checking for new responses and creating the instances for them")
+                for response in data["responses"]:
+                    if UserResponse.objects.filter(user_response=response).exists():
+                        pass
+                    else:
+                        user_response_obj = UserResponse.objects.create(
+                            draft_name=Draft.objects.get(organisation_name=org_obj, draft_name=draft),
+                            user_response=response)
+
+                        new_responses.append(response)
+
+                print("Checking for new responses and creating the instances for them")
+                for category in data["summary"]:
+                    if Category.objects.filter(category=category).exists():
+                        pass
+                    else:
+                        cat_obj = SentenceCategory.objects.create(
+                            draft_name=Draft.objects.get(
+                                organisation_name=org_obj, 
+                                draft_name=draft),
+                            category=category)
+
+                
+                sm = SimilarityMapping(draft, data['responses'], data["summary"])
+                print("Sentence model declared\n")
+
+                print("Sentence Model invoked\n")
+                output = sm.driver()
+
+                ps = "Output for " + draft + " generated\n"
+                print(ps)
+
+                ml_sm_output[draft] = output[draft]
+
+
+            # If draft doesn't exist then adding it to db
+            # Adding all the corresponding responses to db
+            # Adding all the corresponding categories to db
+            # Fed new draft, responses and the categories to ML model
+
+            # Except if draft doesn't exist
+            except:
+                print("The draft does not exists\n")
+                draft_obj = Draft.objects.create(draft_name=draft, organisation_name=org_obj)
+                
+                new_responses = []
+
+                print("Creating the response instances\n")
+                for response in data["responses"]:
+                    user_response_obj = UserResponse.objects.create(draft_name=draft_obj, user_response=response)
+                    user_response_obj.save()
+                    new_responses.append(response)
+
+                print("Creating sentence category instances\n")
+                for category in data["summary"]:
+                    cat_obj = SentenceCategory.objects.create(
+                            draft_name=Draft.objects.get(organisation_name=org_obj, draft_name=draft),
+                            category=category)
+                
+                print("Declaring the Sentence model\n")
+                sm = SimilarityMapping(draft, new_responses, data["summary"])
+                output = sm.driver()
+
+                ps = "Output for " + draft + " generated\n"
+                print(ps)
+
+                ml_sm_output[draft] = output[draft]
+
+            
+
+        return HttpResponse(json.dumps(ml_sm_output), content_type="application/json")
