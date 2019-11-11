@@ -12,49 +12,12 @@ import os
 
 from Backend.settings import BASE_DIR
 
-
-# def parse(filepath):
-#     '''
-#     This function parses the fed csv file and saves them separately,
-#     segregating the categories
-#     Args(1) - csv filepath
-#     '''
-#     xls = pd.ExcelFile(filepath)
-#     df = pd.read_excel(xls, 'Form responses 1', header=[0, 1])
-
-#     headers = df.keys()[1:]
-#     headers = headers[:len(headers)-3]
-#     for h in headers[1::2]:
-#         filename = str(h).split(',')[0].split('\'')[1] + '.txt'
-
-#         file = open(os.path.join(BASE_DIR, 'Venter/ML_model/sentence_model/data/comments/') + filename, 'w', encoding='utf-8')
-#         index = 1
-#         print("Parsing " + filename + '...')
-#         for sentence in df[h]:
-#             if type(sentence) == str:
-#                 file.write(str(index) + '- ' + sentence.lstrip().replace('\n', ' ') + '\n')
-#                 index += 1
-
 def parse(draft_name, new_responses):
     '''
-    This function parses the fed csv file and saves them separately,
-    segregating the categories
-    Args(1) - csv filepath
+    This function reads the list of new responses and performs the preprocessing
+    Args(1) - draft_name (string), Args(2) - new responses (list)
     '''
-    # xls = pd.ExcelFile(filepath)
-    # df = pd.read_excel(xls, 'Form responses 1', header=[0, 1])
-
-    # headers = df.keys()[1:]
-    # headers = headers[:len(headers)-3]
-
-    # filename = str(draft_name).split(',')[0].split('\'')[0] + '.txt'
-
-    # file = open(
-    #     os.path.join(BASE_DIR, 'Venter/ML_model/sentence_model/data/comments/') + filename,
-    #     'w',
-    #     encoding='utf-8')
-
-    # print("Parsing " + filename + '...')
+    
     for sentence in new_responses:
         sentence = sentence.lstrip().replace('\n', ' ')
 
