@@ -15,3 +15,4 @@ Venter/ML_Model/sentence_model/.DS_Store
 Venter/__pycache__/**
 stats.txt
 Venter/ML_Model/keyword_model/data/
+static/

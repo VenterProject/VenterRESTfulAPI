@@ -1,6 +1,7 @@
 from datetime import datetime
 from django.db import models
 from django.core.validators import FileExtensionValidator
+import os
 
 
 class Organisation(models.Model):
@@ -93,7 +94,7 @@ class Draft(models.Model):
         on_delete = models.CASCADE,
     )
     draft_name = models.CharField(
-        max_length = 200,
+        max_length = 255,
         unique=True,
     )
     creation_date = models.DateTimeField(
@@ -129,7 +130,7 @@ class Category(models.Model):
         null=True,
     )
     category = models.CharField(
-        max_length=200
+        max_length=255
     )
 
     class Meta:
@@ -153,7 +154,7 @@ class SentenceCategory(models.Model):
         null=True,
     )
     category = models.CharField(
-        max_length=200
+        max_length=255
     )
 
     class Meta:
@@ -174,7 +175,7 @@ class UserResponse(models.Model):
         on_delete = models.CASCADE,
     )
     user_response = models.CharField(
-        max_length = 200
+        max_length=5000
     )
     creation_date = models.DateTimeField(
         default=datetime.now,

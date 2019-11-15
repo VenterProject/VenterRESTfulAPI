@@ -88,7 +88,7 @@ def categorizer(keywords):
 
     st = time.time()
     
-    wordmodelfile = os.path.join(BASE_DIR, 'Venter/ML_model/sentence_model/MAX.bin')
+    wordmodelfile = os.path.join(BASE_DIR, 'Venter/ML_Model/sentence_model/MAX.bin')
     wordmodel = KeyedVectors.load_word2vec_format(wordmodelfile, binary = True, limit=200000)
     wordmodel.init_sims(replace=True)
     et = time.time()
@@ -96,7 +96,7 @@ def categorizer(keywords):
     print(s)
     stats.write(s + '\n')
 
-    responsePath = os.path.join(BASE_DIR, 'Venter/ML_model/keyword_model/data/keyword data/')
+    responsePath = os.path.join(BASE_DIR, 'Venter/ML_Model/keyword_model/data/keyword data/')
     responseDomains = os.listdir(responsePath)
     
     # dictionary for populating the json output

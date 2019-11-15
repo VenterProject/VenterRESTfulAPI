@@ -26,7 +26,7 @@ def parse(draft_name, response):
         tokenized_text+=sent_tokenize(item)
     draft_name = draft_name.lower()
     name = draft_name+'.txt'
-    path = 'Venter/ML_model/keyword_model/data/keyword data/'+name
+    path = 'Venter/ML_Model/keyword_model/data/keyword data/'+name
 
     file1 = open(path, 'w')
     for sent in tokenized_text:

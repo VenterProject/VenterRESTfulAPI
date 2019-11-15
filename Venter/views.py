@@ -91,8 +91,25 @@ class ModelKMView(APIView):
             # if response list is empty, then responses received are same, hence directly fetch the ml_output file associated with the draft_name
             # if response list is not empty, the list is fed into the ML model for performing prediction on the new set of responses
             results = draft_obj.ml_output.output_file_json.path
+            f = draft_obj.ml_output
+            # with open(results, 'r') as content:
+            #   dict1 = json.load(content)
+
+
+
+
+            temp1 = f.output_filename
+            temp2 = os.path.splitext(temp1)
+            custom_input_file_name = temp2[0]
+            output_json_file_name = custom_input_file_name+'.json'
+            results = os.path.join(MEDIA_ROOT, f'{f.organisation_name}/{f.ckpt_date.date()}/output/{output_json_file_name}')
+
             with open(results, 'r') as content:
                 dict1 = json.load(content)
+
+
+
+
 
             if len(response2)==0:
                 ml_output = dict1

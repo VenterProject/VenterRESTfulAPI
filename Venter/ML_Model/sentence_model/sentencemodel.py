@@ -83,7 +83,7 @@ def categorizer(draft_name, responses, categories):
     stats = open('stats.txt', 'w', encoding='utf-8')
 
     st = time.time()
-    wordmodelfile = os.path.join(BASE_DIR, 'Venter/ML_model/sentence_model/MAX.bin')
+    wordmodelfile = os.path.join(BASE_DIR, 'Venter/ML_Model/sentence_model/MAX.bin')
     wordmodel = KeyedVectors.load_word2vec_format(wordmodelfile, binary=True, limit=200000)
     et = time.time()
     s = 'Word embedding loaded in %f secs.' % (et-st)
