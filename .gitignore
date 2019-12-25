@@ -1,5 +1,5 @@
 db.sqlite3
-venter_venv/
+venv/
 .vscode/
 Venter/migrations
 apienv/

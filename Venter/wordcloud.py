@@ -60,21 +60,26 @@ def generate_wordcloud(input_wordcloud):
     words_output has format { category: [{ word: "word1", freq: freq1 }], }
     '''
 
-    data = {}
-    words = {}
+    words = []
     data = input_wordcloud
+    # word_list = nltk.word_tokenize(data)
+    print("Data: ")
+    print(data)
+    sent_list = nltk.sent_tokenize(data)
+    temp_list = mapNounFrequency(sent_list)
+    words = temp_list
+    # for k, v in data.items():
+    #     temp_list = []
+    #     temp_list = mapNounFrequency(v)
+    #     words[k] = temp_list
+    print('Words: ')
+    print(words)
+    # words_output = {}
 
-    for k, v in data.items():
-        temp_list = []
-        temp_list = mapNounFrequency(v)
-        words[k] = temp_list
-
-    words_output = {}
-
-    for k, v in words.items():
-        words_output[k]=[]
-        for k1, v1 in v.items():
-            words_output[k].append({'word':k1,'freq':v1})
+    # for k, v in words.items():
+    #     words_output[k]=[]
+    #     for k1, v1 in v.items():
+    #         words_output[k].append({'word':k1,'freq':v1})
 
 
     '''
@@ -97,4 +102,4 @@ def generate_wordcloud(input_wordcloud):
     #     if len(k)>2:
     #         words_output[k.upper()] = v
 
-    return words_output
+    return words

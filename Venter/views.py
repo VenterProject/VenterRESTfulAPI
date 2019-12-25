@@ -11,7 +11,7 @@ from Venter.models import File, Organisation, Draft, UserResponse, Category, Sen
 from Venter.serializers import FileSerializer
 from Venter.ML_Model.keyword_model.modeldriver import KeywordSimilarityMapping
 from Venter.ML_Model.sentence_model.modeldriver import SimilarityMapping
-from Backend.settings import MEDIA_ROOT
+from Backend.settings import MEDIA_ROOT, DRAFT_ROOT
 
 from .wordcloud import generate_wordcloud
 
@@ -62,9 +62,19 @@ class ModelKMView(APIView):
     """
     def post(self, request):
         ml_input_json_data=json.loads(request.body)
-
+        print("ML Input: ")
+        print(ml_input_json_data)
         draft = list(ml_input_json_data.keys())[0]
         draft_name = draft.lower()
+        print('DRAFT NAME: ')
+        print(draft_name)
+        DRAFT_NAME = draft_name + '.txt'
+        print(DRAFT_NAME)
+        print(DRAFT_ROOT)
+        draft_root = 'D:/Pycharm Projects/VenterCIVISAPI/Venter/ML_Model/keyword_model/data/keyword data/'
+        draft_path = os.path.join(draft_root, DRAFT_NAME)
+        print(draft_path)
+
 
         org_obj = Organisation.objects.get(organisation_name='CIVIS')
         response=[]
@@ -73,12 +83,28 @@ class ModelKMView(APIView):
                 response.append(item)
         keyword_dict={}
         for draft, val in ml_input_json_data.items():
-            keyword_list = val['summary']
+            summary = val['summary']
+        
+        keywords_excluded = ['accordance', 'act', 'affairs', 'aim', 'addition', 'aims', 'aspects', 
+        'authorities', 'authority', 'bill', 'case', 'cases', 'central', 'centre', 'centres', 'comments', 
+        'date', 'department', 'directorate', 'document', 'draft', 'etc', 'feedback', 'focus',  'india',
+        'government', 'inputs', 'law', 'laws', 'ministry', 'national', 'people', 'policies', 'policy', 
+        'practice', 'practices', 'regulation', 'regulations', 'rs', 'rules', 'section', 'sections', 
+        'stakeholders', 'state', 'states', 'use', 'year', 'years', 'i', 'ii', 'iii', 'iv', 'v', 'vi', 
+        'vii', 'viii', 'ix', 'x']
+
+        keywords = generate_wordcloud(summary)
+
+        keyword_list = []
+        for keyword in keywords:
+            if keyword not in keywords_excluded:
+                keyword_list.append(keyword)
+        
+        keyword_dict = {}
         keyword_dict[draft_name] = keyword_list
 
         try:
             draft_obj = Draft.objects.get(organisation_name=org_obj, draft_name=draft_name)
-
             # create response list(only for the new set of responses i.e. responses not already existing in the db for a particular draft_name)
             temp_response = []
             temp_response = response
@@ -87,7 +113,8 @@ class ModelKMView(APIView):
                 if UserResponse.objects.filter(draft_name=draft_obj, user_response=resp).exists()==False:
                     UserResponse.objects.create(draft_name=draft_obj, user_response=resp)
                     response2.append(resp)
-
+            print("Response 2: ")
+            print(response2)
             # if response list is empty, then responses received are same, hence directly fetch the ml_output file associated with the draft_name
             # if response list is not empty, the list is fed into the ML model for performing prediction on the new set of responses
             results = draft_obj.ml_output.output_file_json.path
@@ -95,8 +122,8 @@ class ModelKMView(APIView):
             # with open(results, 'r') as content:
             #   dict1 = json.load(content)
 
-
-
+            print("Response 2: ")
+            print(response2)
 
             temp1 = f.output_filename
             temp2 = os.path.splitext(temp1)
@@ -107,13 +134,12 @@ class ModelKMView(APIView):
             with open(results, 'r') as content:
                 dict1 = json.load(content)
 
-
-
-
-
             if len(response2)==0:
                 ml_output = dict1
             else:
+                print("Response 2: ")
+                print(response2)
+                print(keyword_dict)
                 sm = KeywordSimilarityMapping(draft_name, response2, keyword_dict)
                 dict2 = sm.driver()
 
@@ -140,6 +166,8 @@ class ModelKMView(APIView):
 
             with open(results, 'w') as content:
                 json.dump(ml_output, content)
+
+            os.remove(draft_path)
 
         except Draft.DoesNotExist:
             sm = KeywordSimilarityMapping(draft_name, response, keyword_dict)
@@ -171,7 +199,9 @@ class ModelKMView(APIView):
             file_instance.save()
 
             Draft.objects.filter(draft_name=draft_name).update(ml_output=file_instance)
-
+            os.remove(draft_path)
+            
+            # os.remove(os.path.join(DRAFT_ROOT, DRAFT_NAME))
         return HttpResponse(json.dumps(ml_output), content_type="application/json")
 
 
@@ -303,7 +333,5 @@ class ModelSMView(APIView):
                 print(ps)
 
                 ml_sm_output[draft] = output[draft]
-
-            
-
+                
         return HttpResponse(json.dumps(ml_sm_output), content_type="application/json")

@@ -80,16 +80,30 @@ WSGI_APPLICATION = 'Backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'venter_civis_api_db',
-        'USER': 'venter_civis_api_user',
-        'PASSWORD': 'user@1234',
-        'HOST': 'localhost',
-        'PORT': '',
+if DEBUG:
+    DATABASES = { 
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, 'db.sqlite3')
+        }
     }
-}
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+    DRAFT_ROOT = os.path.join(BASE_DIR, 'Venter/ML_Model/keyword_model/data/keyword data')
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'NAME': 'venter_db',
+            'USER': 'venter_user',
+            'PASSWORD': 'AdminAdmin@1',
+            'HOST': 'localhost',
+            'PORT': '',
+        }
+    }
+    MEDIA_URL = '/'
+    MEDIA_ROOT = 'media'
+    DRAFT_ROOT = 'Venter/ML_Model/keyword_model/data/keyword data'
 
 
 # Password validation
@@ -131,8 +145,8 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
-MEDIA_URL = '/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# MEDIA_URL = '/'
+# MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 LOGGING = {
     'version': 1,
