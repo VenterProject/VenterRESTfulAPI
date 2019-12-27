@@ -13,7 +13,8 @@ class KeywordSimilarityMapping:
         # parsing the input file for having sampled input to the model
         xlsxparser.parse(self.draft_name, self.response)
 
-        results = keywordmodel.categorizer(self.draft_keyword_dict)
+        results = keywordmodel.categorizer(self.draft_name, self.draft_keyword_dict)
         return results
+
 
 

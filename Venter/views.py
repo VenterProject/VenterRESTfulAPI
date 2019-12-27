@@ -11,7 +11,7 @@ from Venter.models import File, Organisation, Draft, UserResponse, Category, Sen
 from Venter.serializers import FileSerializer
 from Venter.ML_Model.keyword_model.modeldriver import KeywordSimilarityMapping
 from Venter.ML_Model.sentence_model.modeldriver import SimilarityMapping
-from Backend.settings import MEDIA_ROOT, DRAFT_ROOT
+from Backend.settings import MEDIA_ROOT, DRAFT_ROOT, BASE_DIR
 
 from .wordcloud import generate_wordcloud
 
@@ -71,7 +71,7 @@ class ModelKMView(APIView):
         DRAFT_NAME = draft_name + '.txt'
         print(DRAFT_NAME)
         print(DRAFT_ROOT)
-        draft_root = 'D:/Pycharm Projects/VenterCIVISAPI/Venter/ML_Model/keyword_model/data/keyword data/'
+        draft_root = 'Venter/ML_Model/keyword_model/data/keyword data/'
         draft_path = os.path.join(draft_root, DRAFT_NAME)
         print(draft_path)
 
@@ -167,7 +167,11 @@ class ModelKMView(APIView):
             with open(results, 'w') as content:
                 json.dump(ml_output, content)
 
-            os.remove(draft_path)
+            draft = os.path.join(BASE_DIR, draft_path)
+            print('Draft: ')
+            print(draft)
+            if(os.path.exists(draft)):
+                os.remove(draft)
 
         except Draft.DoesNotExist:
             sm = KeywordSimilarityMapping(draft_name, response, keyword_dict)
@@ -199,9 +203,14 @@ class ModelKMView(APIView):
             file_instance.save()
 
             Draft.objects.filter(draft_name=draft_name).update(ml_output=file_instance)
-            os.remove(draft_path)
+            draft = os.path.join(BASE_DIR, draft_path)
+            if(os.path.exists(draft)):
+                os.remove(draft)
             
             # os.remove(os.path.join(DRAFT_ROOT, DRAFT_NAME))
+        draft = os.path.join(BASE_DIR, draft_path)
+        if(os.path.exists(draft)):
+            os.remove(draft)
         return HttpResponse(json.dumps(ml_output), content_type="application/json")
 
 

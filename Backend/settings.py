@@ -23,12 +23,13 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '$qygd7ma#0lm1^&ec$t68a58jr6_nmbd61yc3hik4-c9iz!ch@'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = [
+    'localhost',
+    '192.168.75.132',
     '255.0.0.0',
     '127.0.0.1',
-    'localhost',
     '192.168.222.128'
 ]
 
@@ -80,30 +81,19 @@ WSGI_APPLICATION = 'Backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
-if DEBUG:
-    DATABASES = { 
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': os.path.join(BASE_DIR, 'db.sqlite3')
-        }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'myproject',
+        'USER': 'myprojectuser',
+        'PASSWORD': 'password',
+        'HOST': 'localhost',
+        'PORT': '',
     }
-    MEDIA_URL = '/media/'
-    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-    DRAFT_ROOT = os.path.join(BASE_DIR, 'Venter/ML_Model/keyword_model/data/keyword data')
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql_psycopg2',
-            'NAME': 'venter_db',
-            'USER': 'venter_user',
-            'PASSWORD': 'AdminAdmin@1',
-            'HOST': 'localhost',
-            'PORT': '',
-        }
-    }
-    MEDIA_URL = '/'
-    MEDIA_ROOT = 'media'
-    DRAFT_ROOT = 'Venter/ML_Model/keyword_model/data/keyword data'
+}
+MEDIA_URL = '/'
+MEDIA_ROOT = 'media'
+DRAFT_ROOT = 'Venter/ML_Model/keyword_model/data/keyword data'
 
 
 # Password validation
