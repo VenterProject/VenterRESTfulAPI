@@ -62,28 +62,38 @@ class ModelKMView(APIView):
     """
     def post(self, request):
         ml_input_json_data=json.loads(request.body)
-        print("ML Input: ")
-        print(ml_input_json_data)
         draft = list(ml_input_json_data.keys())[0]
         draft_name = draft.lower()
-        print('DRAFT NAME: ')
-        print(draft_name)
         DRAFT_NAME = draft_name + '.txt'
-        print(DRAFT_NAME)
-        print(DRAFT_ROOT)
         draft_root = 'Venter/ML_Model/keyword_model/data/keyword data/'
         draft_path = os.path.join(draft_root, DRAFT_NAME)
-        print(draft_path)
-
-
         org_obj = Organisation.objects.get(organisation_name='CIVIS')
         response=[]
+        flag_resp = False
+        flag_summary = False
         for draft, val in ml_input_json_data.items():
-            for item in val['responses']:
-                response.append(item)
+            if (type(val['responses']) == list and val['responses']):
+                for item in val['responses']:
+                    response.append(item)
+            else:
+                flag_resp = True
+                custom_error_responses = 'Status Code 400: Invalid input (No responses found)'
         keyword_dict={}
         for draft, val in ml_input_json_data.items():
-            summary = val['summary']
+            if (type(val['summary']) == str and val['summary']):
+                summary = val['summary']
+            else:
+                flag_summary = True
+                custom_error_summary = 'Status Code 401: Invalid input (No summary found)'
+               
+        if (flag_resp and flag_summary):
+            if not Draft.objects.filter(organisation_name=org_obj, draft_name=draft_name).exists():
+                custom_error_draft = 'Status code 403: Invalid input (Draft not found)'
+                return HttpResponse(json.dumps(custom_error_draft), content_type="application/json")
+        elif (flag_resp):
+            return HttpResponse(json.dumps(custom_error_responses), content_type="application/json")
+        elif (flag_summary):
+            return HttpResponse(json.dumps(custom_error_summary), content_type="application/json") 
         
         keywords_excluded = ['accordance', 'act', 'affairs', 'aim', 'addition', 'aims', 'aspects', 
         'authorities', 'authority', 'bill', 'case', 'cases', 'central', 'centre', 'centres', 'comments', 
@@ -92,16 +102,22 @@ class ModelKMView(APIView):
         'practice', 'practices', 'regulation', 'regulations', 'rs', 'rules', 'section', 'sections', 
         'stakeholders', 'state', 'states', 'use', 'year', 'years', 'i', 'ii', 'iii', 'iv', 'v', 'vi', 
         'vii', 'viii', 'ix', 'x']
-
-        keywords = generate_wordcloud(summary)
-
+        flag_keywords = False
+        if not flag_summary:
+            keywords = generate_wordcloud(summary)
+            flag_keywords = True
+        custom_error_keywords = 'Status Code 402: No keywords detected from input summary'
+        if flag_keywords:
+            if len(keywords)==0:
+                return HttpResponse(json.dumps(custom_error_keywords), content_type="application/json")
         keyword_list = []
-        for keyword in keywords:
-            if keyword not in keywords_excluded:
-                keyword_list.append(keyword)
+        if flag_keywords:
+            for keyword in keywords:
+                if keyword not in keywords_excluded:
+                    keyword_list.append(keyword)
         
-        keyword_dict = {}
-        keyword_dict[draft_name] = keyword_list
+            keyword_dict = {}
+            keyword_dict[draft_name] = keyword_list
 
         try:
             draft_obj = Draft.objects.get(organisation_name=org_obj, draft_name=draft_name)
@@ -113,35 +129,25 @@ class ModelKMView(APIView):
                 if UserResponse.objects.filter(draft_name=draft_obj, user_response=resp).exists()==False:
                     UserResponse.objects.create(draft_name=draft_obj, user_response=resp)
                     response2.append(resp)
-            print("Response 2: ")
-            print(response2)
             # if response list is empty, then responses received are same, hence directly fetch the ml_output file associated with the draft_name
             # if response list is not empty, the list is fed into the ML model for performing prediction on the new set of responses
             results = draft_obj.ml_output.output_file_json.path
             f = draft_obj.ml_output
             # with open(results, 'r') as content:
             #   dict1 = json.load(content)
-
-            print("Response 2: ")
-            print(response2)
-
             temp1 = f.output_filename
             temp2 = os.path.splitext(temp1)
             custom_input_file_name = temp2[0]
             output_json_file_name = custom_input_file_name+'.json'
             results = os.path.join(MEDIA_ROOT, f'{f.organisation_name}/{f.ckpt_date.date()}/output/{output_json_file_name}')
-
             with open(results, 'r') as content:
                 dict1 = json.load(content)
-
             if len(response2)==0:
                 ml_output = dict1
             else:
-                print("Response 2: ")
-                print(response2)
-                print(keyword_dict)
                 sm = KeywordSimilarityMapping(draft_name, response2, keyword_dict)
                 dict2 = sm.driver()
+
 
                 # open pre-existing ml output file and append new response to it; update ml_output file; pass response to API.
                 draft_key = list(dict1.keys())[0]
@@ -163,10 +169,8 @@ class ModelKMView(APIView):
                         d3[k]=v
                 ml_output={}
                 ml_output[draft_key]=d3
-
             with open(results, 'w') as content:
                 json.dump(ml_output, content)
-
             draft = os.path.join(BASE_DIR, draft_path)
             print('Draft: ')
             print(draft)
@@ -176,32 +180,26 @@ class ModelKMView(APIView):
         except Draft.DoesNotExist:
             sm = KeywordSimilarityMapping(draft_name, response, keyword_dict)
             ml_output = sm.driver()
-
             # create Draft, Category, UserResponses, File objects instances in Database
             draft_obj = Draft.objects.create(organisation_name=org_obj, draft_name=draft_name)
             for cat in keyword_list:
                 Category.objects.create(draft_name=draft_obj, category=cat)
             for resp in response:
                 UserResponse.objects.create(draft_name=draft_obj, user_response=resp)
-
             file_instance = File.objects.create(
                 organisation_name=org_obj,
             )
             file_instance.save()
-
             output_directory_path = os.path.join(MEDIA_ROOT, f'{file_instance.organisation_name}/{file_instance.ckpt_date.date()}/output')
             if not os.path.exists(output_directory_path):
                 os.makedirs(output_directory_path)
-
             file_id = str(file_instance.id)
             output_file_json_name = 'ml_output__'+file_id+'.json'
             output_file_json_path = os.path.join(output_directory_path, output_file_json_name)
-
             with open(output_file_json_path, 'w') as temp:
                 json.dump(ml_output, temp)
             file_instance.output_file_json = output_file_json_path
             file_instance.save()
-
             Draft.objects.filter(draft_name=draft_name).update(ml_output=file_instance)
             draft = os.path.join(BASE_DIR, draft_path)
             if(os.path.exists(draft)):
@@ -212,7 +210,6 @@ class ModelKMView(APIView):
         if(os.path.exists(draft)):
             os.remove(draft)
         return HttpResponse(json.dumps(ml_output), content_type="application/json")
-
 
 class WCView(APIView):
     """
